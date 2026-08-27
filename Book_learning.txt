@@ -1,0 +1,11 @@
+For each http handler we do following:
+1. Unmarshal the request’s JSON body into a struct.
+2. Run that endpoint’s logic with the request to obtain a result.
+3. Marshal and write that result to the response.
+
+Security : 
+It is always better to consider Security from the beginning
+3 steps to consider whail adding security to distributes services
+1. Encrypt in flight data
+2. Authenticte user
+3. Authorize user
