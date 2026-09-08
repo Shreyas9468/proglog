@@ -70,9 +70,15 @@ func TestAgent(t *testing.T) {
 		for _, agent := range agents {
 			err := agent.Shutdown()
 			require.NoError(t, err)
-			require.NoError(t,
-				os.RemoveAll(agent.Config.DataDir),
-			)
+			var removeErr error
+			for attempt := 0; attempt < 20; attempt++ {
+				removeErr = os.RemoveAll(agent.Config.DataDir)
+				if removeErr == nil {
+					break
+				}
+				time.Sleep(100 * time.Millisecond)
+			}
+			require.NoError(t, removeErr)
 		}
 	}()
 	time.Sleep(3 * time.Second)
