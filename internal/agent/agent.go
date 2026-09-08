@@ -101,7 +101,7 @@ func (a *Agent) setupLog() error {
 		if _, err := reader.Read(b); err != nil {
 			return false
 		}
-		return !bytes.Equal(b, []byte{byte(log.RaftRPC)})
+		return bytes.Equal(b, []byte{byte(log.RaftRPC)})
 	})
 
 	logConfig := log.Config{}

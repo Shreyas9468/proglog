@@ -56,24 +56,15 @@ func (i *index) Close() error {
 
 	i.mmap = nil
 
-	name := i.file.Name()
-
-	if err := i.file.Close(); err != nil {
+	if err := i.file.Truncate(int64(i.size)); err != nil {
 		return err
 	}
 
-	f, err := os.OpenFile(name, os.O_RDWR, 0644)
-	if err != nil {
+	if err := i.file.Sync(); err != nil {
 		return err
 	}
 
-	defer f.Close()
-
-	if err := f.Truncate(int64(i.size)); err != nil {
-		return err
-	}
-
-	return f.Sync()
+	return i.file.Close()
 }
 func (i *index) Read(in int64) (out uint32, pos uint64, err error) {
 	if i.size == 0 {

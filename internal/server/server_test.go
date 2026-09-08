@@ -22,6 +22,7 @@ import (
 	"github.com/Shreyas9468/proglog/internal/auth"
 	"github.com/Shreyas9468/proglog/internal/config"
 	"github.com/Shreyas9468/proglog/internal/log"
+	. "github.com/Shreyas9468/proglog/internal/server"
 )
 
 var debug = flag.Bool("debug", false, "Enable observability for debugging.")
