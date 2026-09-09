@@ -4,7 +4,6 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
 	"os"
 	"testing"
 	"time"
@@ -18,6 +17,7 @@ import (
 	"github.com/Shreyas9468/proglog/internal/agent"
 	api "github.com/Shreyas9468/proglog/internal/api/v1"
 	"github.com/Shreyas9468/proglog/internal/config"
+	"github.com/Shreyas9468/proglog/internal/loadbalance"
 )
 
 func TestAgent(t *testing.T) {
@@ -42,7 +42,7 @@ func TestAgent(t *testing.T) {
 		ports := dynaport.Get(2)
 		bindAddr := fmt.Sprintf("%s:%d", "127.0.0.1", ports[0])
 		rpcPort := ports[1]
-		dataDir, err := ioutil.TempDir("", "agent-test-log")
+		dataDir, err := os.MkdirTemp("", "agent-test-log")
 		require.NoError(t, err)
 		var startJoinAddrs []string
 		if i != 0 {
@@ -133,8 +133,9 @@ func client(
 	opts := []grpc.DialOption{grpc.WithTransportCredentials(tlsCreds)}
 	rpcAddr, err := agent.Config.RPCAddr()
 	require.NoError(t, err)
-	conn, err := grpc.Dial(fmt.Sprintf(
-		"%s",
+	conn, err := grpc.NewClient(fmt.Sprintf(
+		"%s:///%s",
+		loadbalance.Name,
 		rpcAddr,
 	), opts...)
 	require.NoError(t, err)

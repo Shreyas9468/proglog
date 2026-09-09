@@ -3,7 +3,6 @@ package server_test
 import (
 	"context"
 	"flag"
-	"io/ioutil"
 	"net"
 	"os"
 	"testing"
@@ -130,10 +129,10 @@ func setupTest(t *testing.T, fn func(*Config)) (
 	authorizer := auth.New(config.ACLModelFile, config.ACLPolicyFile)
 	var telemetryExporter *exporter.LogExporter
 	if *debug {
-		metricsLogFile, err := ioutil.TempFile("", "metrics-*.log")
+		metricsLogFile, err := os.CreateTemp("", "metrics-*.log")
 		require.NoError(t, err)
 		t.Logf("metrics log file: %s", metricsLogFile.Name())
-		tracesLogFile, err := ioutil.TempFile("", "traces-*.log")
+		tracesLogFile, err := os.CreateTemp("", "traces-*.log")
 		require.NoError(t, err)
 		t.Logf("traces log file: %s", tracesLogFile.Name())
 		telemetryExporter, err = exporter.NewLogExporter(exporter.Options{
