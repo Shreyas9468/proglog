@@ -2,7 +2,6 @@ package log_test
 
 import (
 	"fmt"
-	"io/ioutil"
 	"net"
 	"os"
 	"testing"
@@ -21,7 +20,7 @@ func TestMultipleNodes(t *testing.T) {
 	nodeCount := 3
 	ports := dynaport.Get(nodeCount)
 	for i := 0; i < nodeCount; i++ {
-		dataDir, err := ioutil.TempDir("", "distributed-log-test")
+		dataDir, err := os.MkdirTemp("", "distributed-log-test")
 		require.NoError(t, err)
 		defer func(dir string) {
 			_ = os.RemoveAll(dir)
@@ -30,7 +29,20 @@ func TestMultipleNodes(t *testing.T) {
 			"tcp",
 			fmt.Sprintf("127.0.0.1:%d", ports[i]),
 		)
+		servers, err := logs[0].GetServers()
 		require.NoError(t, err)
+		require.Equal(t, 3, len(servers))
+		require.True(t, servers[0].IsLeader)
+		require.False(t, servers[1].IsLeader)
+		require.False(t, servers[2].IsLeader)
+		err = logs[0].Leave("1")
+		require.NoError(t, err)
+		time.Sleep(50 * time.Millisecond)
+		servers, err = logs[0].GetServers()
+		require.NoError(t, err)
+		require.Equal(t, 2, len(servers))
+		require.True(t, servers[0].IsLeader)
+		require.False(t, servers[1].IsLeader)
 		config := log.Config{}
 		config.Raft.StreamLayer = log.NewStreamLayer(ln, nil, nil)
 		config.Raft.LocalID = raft.ServerID(fmt.Sprintf("%d", i))
