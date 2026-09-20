@@ -89,6 +89,20 @@ func (c *cli) setupConfig(cmd *cobra.Command, args []string) error {
 	c.cfg.Bootstrap = viper.GetBool("bootstrap")
 	c.cfg.ACLModelFile = viper.GetString("acl-model-file")
 	c.cfg.ACLPolicyFile = viper.GetString("acl-policy-file")
+	if c.cfg.ACLModelFile == "" {
+		if _, err := os.Stat("/var/proglog/model.conf"); err == nil {
+			c.cfg.ACLModelFile = "/var/proglog/model.conf"
+		} else if _, err := os.Stat(config.ACLModelFile); err == nil {
+			c.cfg.ACLModelFile = config.ACLModelFile
+		}
+	}
+	if c.cfg.ACLPolicyFile == "" {
+		if _, err := os.Stat("/var/proglog/policy.csv"); err == nil {
+			c.cfg.ACLPolicyFile = "/var/proglog/policy.csv"
+		} else if _, err := os.Stat(config.ACLPolicyFile); err == nil {
+			c.cfg.ACLPolicyFile = config.ACLPolicyFile
+		}
+	}
 	c.cfg.ServerTLSConfig.CertFile = viper.GetString("server-tls-cert-file")
 	c.cfg.ServerTLSConfig.KeyFile = viper.GetString("server-tls-key-file")
 	c.cfg.ServerTLSConfig.CAFile = viper.GetString("server-tls-ca-file")

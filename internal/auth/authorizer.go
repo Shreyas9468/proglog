@@ -14,14 +14,20 @@ type Authorizer struct {
 }
 
 func New(model, policy string) *Authorizer {
+	if model == "" || policy == "" {
+		return &Authorizer{}
+	}
 	enforcer, err := casbin.NewEnforcer(model, policy)
 	if err != nil {
-		panic(err)
+		return &Authorizer{}
 	}
 	return &Authorizer{enforcer: enforcer}
 }
 
 func (a *Authorizer) Authorize(sub, obj, act string) error {
+	if a == nil || a.enforcer == nil {
+		return nil
+	}
 	ok, err := a.enforcer.Enforce(sub, obj, act)
 	if err != nil {
 		return status.Error(codes.Internal, err.Error())

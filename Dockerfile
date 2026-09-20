@@ -15,5 +15,7 @@ FROM scratch
 
 COPY --from=build /go/bin/proglog /bin/proglog
 COPY --from=build /go/bin/grpc_health_probe /bin/grpc_health_probe
+COPY --from=build /go/src/proglog/test/model.conf /var/proglog/model.conf
+COPY --from=build /go/src/proglog/test/policy.csv /var/proglog/policy.csv
 
 ENTRYPOINT ["/bin/proglog"]
