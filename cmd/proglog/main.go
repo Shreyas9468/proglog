@@ -69,6 +69,12 @@ func (c *cli) setupConfig(cmd *cobra.Command, args []string) error {
 	if err != nil {
 		return err
 	}
+
+	// Support environment variables with PROGLOG_ prefix (e.g. PROGLOG_RPC_PORT).
+	// This allows cloud hosts like Koyeb to configure the service via env vars.
+	viper.SetEnvPrefix("proglog")
+	viper.AutomaticEnv()
+
 	viper.SetConfigFile(configFile)
 	if err = viper.ReadInConfig(); err != nil {
 		if _, ok := err.(viper.ConfigFileNotFoundError); !ok {

@@ -29,20 +29,8 @@ func TestMultipleNodes(t *testing.T) {
 			"tcp",
 			fmt.Sprintf("127.0.0.1:%d", ports[i]),
 		)
-		servers, err := logs[0].GetServers()
 		require.NoError(t, err)
-		require.Equal(t, 3, len(servers))
-		require.True(t, servers[0].IsLeader)
-		require.False(t, servers[1].IsLeader)
-		require.False(t, servers[2].IsLeader)
-		err = logs[0].Leave("1")
-		require.NoError(t, err)
-		time.Sleep(50 * time.Millisecond)
-		servers, err = logs[0].GetServers()
-		require.NoError(t, err)
-		require.Equal(t, 2, len(servers))
-		require.True(t, servers[0].IsLeader)
-		require.False(t, servers[1].IsLeader)
+
 		config := log.Config{}
 		config.Raft.StreamLayer = log.NewStreamLayer(ln, nil, nil)
 		config.Raft.LocalID = raft.ServerID(fmt.Sprintf("%d", i))
@@ -66,17 +54,55 @@ func TestMultipleNodes(t *testing.T) {
 		}
 		logs = append(logs, l)
 	}
-	err := logs[0].Leave("1")
+
+	record := &api.Record{
+		Value: []byte("hello world"),
+	}
+	off, err := logs[0].Append(record)
 	require.NoError(t, err)
+
+	require.Eventually(t, func() bool {
+		for j := 0; j < nodeCount; j++ {
+			got, err := logs[j].Read(off)
+			if err != nil {
+				return false
+			}
+			if string(got.Value) != string(record.Value) {
+				return false
+			}
+		}
+		return true
+	}, 500*time.Millisecond, 50*time.Millisecond)
+
+	servers, err := logs[0].GetServers()
+	require.NoError(t, err)
+	require.Equal(t, 3, len(servers))
+	require.True(t, servers[0].IsLeader)
+	require.False(t, servers[1].IsLeader)
+	require.False(t, servers[2].IsLeader)
+
+	err = logs[0].Leave("1")
+	require.NoError(t, err)
+
 	time.Sleep(50 * time.Millisecond)
-	off, err := logs[0].Append(&api.Record{
+
+	servers, err = logs[0].GetServers()
+	require.NoError(t, err)
+	require.Equal(t, 2, len(servers))
+	require.True(t, servers[0].IsLeader)
+	require.False(t, servers[1].IsLeader)
+
+	off, err = logs[0].Append(&api.Record{
 		Value: []byte("third"),
 	})
 	require.NoError(t, err)
+
 	time.Sleep(50 * time.Millisecond)
-	record, err := logs[1].Read(off)
+
+	record, err = logs[1].Read(off)
 	require.IsType(t, api.ErrOffsetOutOfRange{}, err)
 	require.Nil(t, record)
+
 	record, err = logs[2].Read(off)
 	require.NoError(t, err)
 	require.Equal(t, []byte("third"), record.Value)

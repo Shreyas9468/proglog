@@ -37,7 +37,15 @@ gencert:
 	move nobody-client-key.pem "$(CONFIG_PATH)\nobody-client-key.pem"
 	move nobody-client.csr "$(CONFIG_PATH)\nobody-client.csr"
 
+.PHONY: compile test init gencert build-docker push-docker
+
 TAG ?= 0.0.1
+GITHUB_USER ?= shreyas9468
+GHCR_IMAGE := ghcr.io/$(GITHUB_USER)/proglog
 
 build-docker:
-		docker build -t proglog:$(TAG) .
+		docker build -t proglog:$(TAG) -t $(GHCR_IMAGE):$(TAG) -t $(GHCR_IMAGE):latest .
+
+push-docker: build-docker
+		docker push $(GHCR_IMAGE):$(TAG)
+		docker push $(GHCR_IMAGE):latest
