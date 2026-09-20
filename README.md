@@ -81,12 +81,13 @@ go run ./cmd/getservers/main.go -addr=localhost:8400
 
 ---
 
-## Cloud Deployment (Free, No Credit Card)
+## Cloud Deployment (100% Free, No Credit Card)
 
-See [deploy/README.md](deploy/README.md) for full instructions on:
+See [`deploy/README.md`](deploy/README.md) for full instructions on:
 - **GitHub Actions** CI/CD pipeline (auto test + build on every push)
-- **GitHub Container Registry** (ghcr.io) for Docker image hosting
-- **Koyeb.com** (free tier, always-on, gRPC support) for cloud hosting
+- **GitHub Container Registry** (`ghcr.io`) for Docker image hosting
+- **Render.com** (100% free tier, 0 credit card required, automatic Docker deployment) for public cloud hosting
+- **Resume Showcase Guide** for testing live gRPC endpoints and sharing on your resume
 
 ---
 

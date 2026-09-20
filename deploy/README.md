@@ -1,110 +1,98 @@
-# Deploying proglog to the Cloud (Free, No Credit Card)
+# 🌐 Free Cloud Deployment Guide for proglog (Render.com)
 
-This guide deploys **proglog** to [Koyeb](https://koyeb.com) — a free, always-on cloud platform that supports Docker and gRPC — with full CI/CD via GitHub Actions.
-
----
-
-## Stack (100% Free, No Credit Card Required)
-
-| Component | Service |
-|---|---|
-| CI/CD Pipeline | GitHub Actions |
-| Container Registry | GitHub Container Registry (`ghcr.io`) |
-| Cloud Host | Koyeb.com (free tier, always on, gRPC support) |
+Deploy **proglog** — a distributed gRPC commit log service — to **Render.com** on their **100% Free Tier** with zero credit card required. Includes automated CI/CD via GitHub Actions.
 
 ---
 
-## One-Time Setup (~5 minutes)
+## 🏗️ Deployment Architecture
 
-### Step 1: Make your GitHub repository public
-
-Go to your repo **Settings → General → Danger Zone → Change visibility → Public**.
-
-> This allows `ghcr.io` to serve your Docker image publicly so Koyeb can pull it.
-
-### Step 2: Create a Koyeb account (no credit card)
-
-1. Go to [https://app.koyeb.com](https://app.koyeb.com)
-2. Click **Continue with GitHub** — no credit card ever required
-3. Complete sign-up
-
-### Step 3: Get your Koyeb API Token
-
-1. In Koyeb dashboard → click your avatar (top right) → **Account**
-2. Go to **API** tab → **Create API Token**
-3. Name it `github-actions`, copy the token
-
-### Step 4: Add the secret to GitHub Actions
-
-1. Go to your GitHub repo → **Settings → Secrets and variables → Actions**
-2. Click **New repository secret**
-3. Name: `KOYEB_API_KEY`
-4. Value: paste the token you copied
-5. Click **Add secret**
-
-### Step 5: Create the Koyeb app (first-time only)
-
-1. In Koyeb dashboard → click **Create App**
-2. Select **Docker** as the deployment method
-3. Docker image: `ghcr.io/shreyas9468/proglog:latest`
-4. App name: `proglog`
-5. Service name: `proglog`
-6. Port: `8400`
-7. Environment variables:
-   ```
-   PROGLOG_BOOTSTRAP=true
-   PROGLOG_RPC_PORT=8400
-   PROGLOG_DATA_DIR=/tmp/proglog
-   ```
-8. Click **Deploy**
-
-After this one-time setup, **every push to `main`** auto-deploys a new version via GitHub Actions!
+| Layer | Service | Cost |
+|---|---|---|
+| **Code Repository** | GitHub (`Shreyas9468/proglog`) | Free |
+| **CI / Automated Tests** | GitHub Actions | Free |
+| **Container Registry** | GitHub Container Registry (`ghcr.io`) | Free |
+| **Cloud Hosting** | Render.com Web Service (Docker) | **100% Free (No Credit Card)** |
 
 ---
 
-## CI/CD Pipeline Flow
+## ⚡ 3-Minute Quick Setup
 
-```
-git push → GitHub Actions CI runs tests
-            ↓ (if tests pass)
-           docker build
-            ↓
-           push to ghcr.io/shreyas9468/proglog:latest
-            ↓
-           deploy to Koyeb (auto, via GitHub Actions)
+### Step 1: Create a Free Render Account
+1. Visit [https://render.com](https://render.com).
+2. Click **Sign Up** and log in with your **GitHub account**.
+3. *No credit card is required.*
+
+---
+
+### Step 2: Deploy the Service on Render
+1. Click **New +** -> **Web Service** in the Render Dashboard.
+2. Select **Build and deploy from a Git repository**.
+3. Connect your **`Shreyas9468/proglog`** repository.
+4. Configure the service parameters:
+   - **Name**: `proglog`
+   - **Environment**: `Docker`
+   - **Region**: Any (e.g., Oregon, US)
+   - **Instance Type**: `Free`
+   - **Dockerfile Path**: `./Dockerfile`
+5. Under **Environment Variables**, add:
+   - `PROGLOG_BOOTSTRAP` = `true`
+   - `PROGLOG_RPC_PORT` = `8400`
+   - `PROGLOG_DATA_DIR` = `/tmp/proglog`
+6. Click **Create Web Service**. Render will start building the Docker container and deploy it automatically!
+
+---
+
+### Step 3: Setup Automated CI/CD (Auto-Deploy on Push)
+1. In your Render Dashboard, select your `proglog` Web Service.
+2. Go to **Settings** -> scroll down to **Deploy Hook**.
+3. Copy the unique **Deploy Hook URL** (looks like `https://api.render.com/deploy/srv-xxxxx?key=yyyyy`).
+4. In your GitHub repository (`Shreyas9468/proglog`), go to:
+   **Settings -> Secrets and variables -> Actions -> New repository secret**.
+5. Name: `RENDER_DEPLOY_HOOK_URL`  
+   Value: *Paste the copied URL*.
+6. Click **Add secret**.
+
+🎉 **That's it!** Whenever you merge or push code to `main`, GitHub Actions will run tests, build the image, and trigger Render to deploy the live service automatically!
+
+---
+
+## 🧪 Testing Your Live Endpoint (Shareable on Resume!)
+
+Once deployed, Render gives you a public HTTPS endpoint, for example:
+`https://proglog-service.onrender.com`
+
+### 1. Test using `grpcurl` (Command Line)
+```bash
+# List available gRPC services on your live cloud endpoint
+grpcurl proglog-service.onrender.com:443 list
 ```
 
----
-
-## Testing the Live Deployment
-
-After deployment, Koyeb gives you a URL like:
-`https://proglog-<hash>.koyeb.app`
-
-Test it with the `getservers` tool:
+### 2. Test using the Go CLI tool (`getservers`)
 ```powershell
-# TLS is handled by Koyeb's edge, so connect with TLS
-go run ./cmd/getservers/main.go -addr=proglog-<hash>.koyeb.app:443
+go run ./cmd/getservers/main.go -addr=proglog-service.onrender.com:443
 ```
 
 ---
 
-## Deploy to Your Own Kubernetes Cluster
+## 📜 Resume Showcase Example
 
-If you have your own Kubernetes cluster, use the production Helm values:
+Add this section to your resume or portfolio:
+
+> **Distributed Commit Log (Go, gRPC, Raft, Docker, CI/CD)**  
+> - Designed and built a high-performance distributed append-only commit log in Go implementing gRPC, Serf discovery, and Raft consensus.
+> - Containerized with Docker and implemented automated CI/CD workflows using GitHub Actions.
+> - Live cloud deployment hosted at `https://proglog-service.onrender.com:443`.
+
+---
+
+## ☸️ Local Kubernetes / Helm Option
+
+If you prefer to run a full 3-node Raft cluster locally using Helm and Kubernetes:
 
 ```powershell
-# Pull the latest image from ghcr.io
-helm upgrade --install proglog deploy/proglog -f deploy/proglog/values-prod.yaml
+# 1. Build local Docker image
+make build-docker
+
+# 2. Deploy Helm chart to local Kubernetes (Minikube / Docker Desktop)
+helm upgrade --install proglog deploy/proglog
 ```
-
----
-
-## Architecture Note
-
-The Koyeb free deployment runs proglog in **single-node mode** (`PROGLOG_BOOTSTRAP=true`). This means:
-- One Raft leader (itself)
-- No peer replication
-- Ephemeral storage (data resets on restart)
-
-This is **perfect for demos**. For production multi-node clustering, use the Helm chart with a Kubernetes StatefulSet (from Chapter 10).

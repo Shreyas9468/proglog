@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: proglog
+    env: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    region: oregon
+    envVars:
+      - key: PROGLOG_RPC_PORT
+        value: "8400"
+      - key: PROGLOG_BOOTSTRAP
+        value: "true"
