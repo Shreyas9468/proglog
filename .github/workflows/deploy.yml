@@ -14,7 +14,13 @@ jobs:
 
     steps:
       - name: Trigger Render Deployment
-        if: ${{ secrets.RENDER_DEPLOY_HOOK_URL != '' }}
+        env:
+          HOOK_URL: ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
         run: |
-          echo "Triggering automated deployment on Render..."
-          curl -s "${{ secrets.RENDER_DEPLOY_HOOK_URL }}"
+          if [ -n "$HOOK_URL" ]; then
+            echo "Triggering automated deployment on Render..."
+            curl -sSf "$HOOK_URL" || echo "Warning: Render deploy hook returned non-200 response"
+          else
+            echo "RENDER_DEPLOY_HOOK_URL secret is not set yet. Skipping deploy hook."
+            echo "To enable auto-deploy, add RENDER_DEPLOY_HOOK_URL to GitHub Repository Secrets."
+          fi
