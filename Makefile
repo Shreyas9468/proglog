@@ -36,3 +36,8 @@ gencert:
 	move nobody-client.pem "$(CONFIG_PATH)\nobody-client.pem"
 	move nobody-client-key.pem "$(CONFIG_PATH)\nobody-client-key.pem"
 	move nobody-client.csr "$(CONFIG_PATH)\nobody-client.csr"
+
+TAG ?= 0.0.1
+
+build-docker:
+		docker build -t proglog:$(TAG) .
