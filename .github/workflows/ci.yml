@@ -31,6 +31,19 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-go-
 
+      - name: Setup TLS Certs & Config
+        run: |
+          mkdir -p ~/.proglog
+          cp test/model.conf test/policy.csv ~/.proglog/
+          curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.4/cfssl_1.6.4_linux_amd64 -o /tmp/cfssl
+          curl -L https://github.com/cloudflare/cfssl/releases/download/v1.6.4/cfssljson_1.6.4_linux_amd64 -o /tmp/cfssljson
+          chmod +x /tmp/cfssl /tmp/cfssljson
+          /tmp/cfssl gencert -initca test/ca-csr.json | /tmp/cfssljson -bare ca
+          /tmp/cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=test/ca-config.json -profile=server test/server-csr.json | /tmp/cfssljson -bare server
+          /tmp/cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=test/ca-config.json -profile=client -cn="root" test/client-csr.json | /tmp/cfssljson -bare root-client
+          /tmp/cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=test/ca-config.json -profile=client -cn="nobody" test/client-csr.json | /tmp/cfssljson -bare nobody-client
+          mv *.pem *.csr ~/.proglog/
+
       - name: Run tests
         run: go test -race -count=1 ./...
 
