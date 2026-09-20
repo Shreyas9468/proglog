@@ -92,25 +92,30 @@ func TestAgent(t *testing.T) {
 		},
 	)
 	require.NoError(t, err)
-	consumeResponse, err := leaderClient.Consume(
-		context.Background(),
-		&api.ConsumeRequest{
-			Offset: produceResponse.Offset,
-		},
-	)
-	require.NoError(t, err)
-	require.Equal(t, consumeResponse.Record.Value, []byte("foo"))
-	// wait until replication has finished
-	time.Sleep(3 * time.Second)
-	followerClient := client(t, agents[1], peerTLSConfig)
-	consumeResponse, err = followerClient.Consume(
-		context.Background(),
-		&api.ConsumeRequest{
-			Offset: produceResponse.Offset,
-		},
-	)
-	require.NoError(t, err)
-	require.Equal(t, consumeResponse.Record.Value, []byte("foo"))
+
+	var consumeResponse *api.ConsumeResponse
+	require.Eventually(t, func() bool {
+		var consumeErr error
+		consumeResponse, consumeErr = leaderClient.Consume(
+			context.Background(),
+			&api.ConsumeRequest{
+				Offset: produceResponse.Offset,
+			},
+		)
+		return consumeErr == nil && string(consumeResponse.Record.Value) == "foo"
+	}, 3*time.Second, 100*time.Millisecond)
+
+	require.Eventually(t, func() bool {
+		var consumeErr error
+		followerClient := client(t, agents[1], peerTLSConfig)
+		consumeResponse, consumeErr = followerClient.Consume(
+			context.Background(),
+			&api.ConsumeRequest{
+				Offset: produceResponse.Offset,
+			},
+		)
+		return consumeErr == nil && string(consumeResponse.Record.Value) == "foo"
+	}, 3*time.Second, 100*time.Millisecond)
 
 	consumeResponse, err = leaderClient.Consume(
 		context.Background(),
