@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io"
 	"net"
+	"net/http"
 	"sync"
 	"time"
 
@@ -83,6 +84,13 @@ func (a *Agent) setupMux() error {
 		return err
 	}
 	a.mux = cmux.New(ln)
+	httpln := a.mux.Match(cmux.HTTP1Fast())
+	go func() {
+		_ = http.Serve(httpln, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(http.StatusOK)
+			_, _ = w.Write([]byte("OK"))
+		}))
+	}()
 	return nil
 }
 
@@ -108,7 +116,6 @@ func (a *Agent) setupLog() error {
 	logConfig.Raft.StreamLayer = log.NewStreamLayer(raftLn, a.Config.ServerTLSConfig, a.Config.PeerTLSConfig)
 	logConfig.Raft.LocalID = raft.ServerID(a.Config.NodeName)
 	logConfig.Raft.Bootstrap = a.Config.Bootstrap
-	logConfig.Segment.InitialOffset = 2
 	var err error
 	a.log, err = log.NewDistributedLog(
 		a.Config.DataDir,
