@@ -1,0 +1,25 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    branches: [main]
+    types: [completed]
+
+jobs:
+  deploy:
+    name: Deploy to Koyeb
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Deploy to Koyeb
+        uses: koyeb/github-action-koyeb@v1
+        with:
+          api_token: ${{ secrets.KOYEB_API_KEY }}
+          app_name: proglog
+          service_name: proglog
+          docker: ghcr.io/${{ github.repository }}:latest
+          service_ports: "8400:http"
+          service_env: PROGLOG_BOOTSTRAP=true,PROGLOG_RPC_PORT=8400,PROGLOG_DATA_DIR=/tmp/proglog
+          service_checks: "8400:http:/"
